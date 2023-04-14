@@ -13,6 +13,11 @@ struct Player {}
 struct Enemy {
     Direction: Vec3,
 }
+#[derive(Component)]
+struct Bullet {
+    velocity: Vec3,
+}
+
 
 fn main() {
     App::new()
@@ -31,6 +36,9 @@ fn main() {
         .add_startup_system(spawn_player)
         .add_startup_system(spawn_camera)
         .add_startup_system(spawn_enemy)
+        .add_system(bullet_spawner)
+        .add_system(bullet_movement)
+        // .add_system(bullet_collision)
         .add_system(player_movement)
         .add_system(enemy_movement)
         .run();
@@ -92,22 +100,89 @@ fn spawn_camera(mut commands: Commands, window: Query<&Window, With<PrimaryWindo
     });
 }
 
+fn bullet_spawner(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut commands: Commands,
+    query: Query<&Transform, With<Player>>,
+    enemy_query: Query<&Transform, With<Enemy>>,
+) {
+    if keyboard_input.pressed(KeyCode::Space) {
+        if let Some(player_transform) = query.iter().next() {
+            let bullet_position = player_transform.translation;
+            let nearest_enemy = enemy_query
+                .iter()
+                .min_by(|a, b| {
+                    a.translation
+                        .distance_squared(bullet_position)
+                        .partial_cmp(&b.translation.distance_squared(bullet_position))
+                        .unwrap()
+                })
+                .unwrap();
+
+            commands.spawn(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::WHITE,
+                    flip_x: false,
+                    flip_y: false,
+                    custom_size: Some(Vec2::new(10.0, 10.0)),
+                    anchor: Anchor::Center,
+                    ..Default::default()
+                },
+                transform: Transform::from_translation(bullet_position),
+                ..Default::default()
+            })
+            .insert(Bullet {
+                velocity: (nearest_enemy.translation - bullet_position)
+                .normalize()
+                    * 500.0,
+            });
+        }
+    }
+}
+
+fn bullet_movement(
+    time: Res<Time>,
+    mut bullet_query: Query<(Entity, &mut Transform, &Bullet), Without<Enemy>>,
+    mut enemy_query: Query<(Entity, &Transform, &Enemy), Without<Bullet>>,
+    mut commands: Commands,
+) {
+    for (bullet_entity, mut bullet_transform, bullet) in bullet_query.iter_mut() {
+        bullet_transform.translation += bullet.velocity * time.delta_seconds();
+
+        for (enemy_entity, enemy_transform, _) in enemy_query.iter_mut() {
+            let distance = bullet_transform.translation.distance(enemy_transform.translation);
+            if distance < 10.0 {
+                commands.entity(bullet_entity).despawn();
+                commands.entity(enemy_entity).despawn();
+            }
+        }
+
+        if bullet_transform.translation.x < 0.0
+            || bullet_transform.translation.x > 1280.0
+            || bullet_transform.translation.y < 0.0
+            || bullet_transform.translation.y > 720.0
+        {
+            commands.entity(bullet_entity).despawn();
+        }
+    }
+}
+
 fn enemy_movement(
-    mut enemy_query: Query<(&mut Transform, &Enemy)>,
+    player_query: Query<&Transform, With<Player>>,
+    mut enemy_query: Query<(&mut Transform, &Enemy), Without<Player>>,
     time: Res<Time>,
 ) {
     for (mut transform, enemy) in enemy_query.iter_mut() {
-        let mut direction = enemy.Direction + Vec3::new(10.0, 5.0, 0.0);
-        // if the enemy is at the edge of the screen on top of horizontal, change direction
-        if transform.translation.x > 1280.0 { 
-            direction.x = -10.0;
-        }
+        if let Ok(player_transform) = player_query.get_single() {
+            let player_pos = player_transform.translation;
 
-        if transform.translation.y > 720.0 {
-            direction.y = -5.0;
-        }
+            let direction = player_pos - transform.translation;
 
-        transform.translation += direction * 5.0 * time.delta_seconds();
+            let speed = 100.0;
+            let movement = direction.normalize() * speed * time.delta_seconds();
+
+            transform.translation += movement;
+        }
     }
 }
 
@@ -137,6 +212,15 @@ fn player_movement(
         if Direction.length() > 0.0 {
             Direction = Direction.normalize();
         }
+
+        if transform.translation.x > 1280.0 {
+            transform.translation.x = 1280.0;
+        }
+
+        if transform.translation.y > 720.0 {
+            transform.translation.y = 720.0;
+        }
+
 
         transform.translation += Direction * 5.0;
     }
