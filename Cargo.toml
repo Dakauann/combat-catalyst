@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bevy = {version = "0.10.1", features = ["dynamic_linking"]}
 rand = "0.8.5"
+bevy_rapier2d = { version = "0.21.0", features = [ "simd-stable", "debug-render-2d" ] }
 
 [profile.dev]
 opt-level = 1

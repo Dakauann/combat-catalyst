@@ -2,15 +2,13 @@ use bevy::{
     prelude::*,
     window::{PresentMode, WindowResolution},
 };
-const BG_COLOR: Color = Color::rgb(0.1, 0.1, 0.1);
-const NUMBER_OF_ENEMIES: u32 = 10;
+mod lib;
+mod systems;
 
-mod player_systems;
-mod enemys_systems;
-mod bullets_systems;
-use player_systems::*;
-use enemys_systems::*;
-use bullets_systems::*;
+use lib::enemy_structs;
+use systems::camera_systems;
+use systems::enemy_systems;
+use systems::player_systems;
 
 fn main() {
     App::new()
@@ -25,13 +23,16 @@ fn main() {
             }),
             ..default()
         }))
-        .insert_resource(ClearColor(BG_COLOR))
-        .add_startup_system(player_systems::spawn_player)
-        .add_startup_system(player_systems::spawn_camera)
-        .add_system(player_systems::player_movement)
-        .add_startup_system(enemys_systems::spawn_enemy)
-        .add_system(enemys_systems::enemy_movement)
-        .add_system(bullets_systems::bullet_spawner)
-        .add_system(bullets_systems::bullet_movement)
+        .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
+        .insert_resource(enemy_structs::EnemysInfos { enemys_count: 30 })
+        .add_startup_systems((
+            player_systems::spawn_player,
+            camera_systems::spawn_camera,
+            enemy_systems::spawn_enemys,
+        ))
+        .add_systems((
+            player_systems::player_movement,
+            camera_systems::camera_movement,
+        ))
         .run();
 }
