@@ -1,27 +1,23 @@
 use crate::{structs::BulletShootingTimer, Bullet, Enemy, Player};
 use bevy::{prelude::*, sprite::Anchor, window::PrimaryWindow};
-use std::thread;
 
 pub fn spawn_bullet(
     mut commands: Commands,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
     enemy_query: Query<&Transform, (With<Enemy>, Without<Bullet>)>,
     bullet_shooting_timer: Res<BulletShootingTimer>,
+    asset_server: Res<AssetServer>,
+    audio: Res<Audio>,
 ) {
     if bullet_shooting_timer.timer.finished() {
         if enemy_query.iter().count() > 0 {
             let player_transform = player_query.get_single().unwrap();
+            let shot_sound = asset_server.load("sounds/shot.ogg");
+            audio.play(shot_sound);
 
             commands.spawn((
                 SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::WHITE,
-                        flip_x: false,
-                        flip_y: false,
-                        custom_size: Some(Vec2::new(5.0, 5.0)),
-                        anchor: Anchor::Center,
-                        ..Default::default()
-                    },
+                    texture: asset_server.load("images/bullet.png"),
                     transform: Transform::from_xyz(
                         player_transform.translation.x,
                         player_transform.translation.y,
@@ -103,9 +99,24 @@ pub fn bullet_hit_detection(
             let x_distance = (enemy_transform.translation.x - bullet_transform.translation.x).abs();
             let y_distance = (enemy_transform.translation.y - bullet_transform.translation.y).abs();
 
-            // Check if the bullet collides with the enemy
             if x_distance < enemy.size.x / 2.0 && y_distance < enemy.size.y / 2.0 {
-                // Remove the bullet and enemy entities
+                commands.spawn(SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::RED,
+                        flip_x: false,
+                        flip_y: false,
+                        custom_size: Some(Vec2::new(30.0, 30.0)),
+                        anchor: Anchor::Center,
+                        ..Default::default()
+                    },
+                    transform: Transform::from_xyz(
+                        enemy_transform.translation.x,
+                        enemy_transform.translation.y,
+                        0.0,
+                    ),
+                    ..Default::default()
+                });
+
                 commands.entity(bullet_entity).despawn();
                 commands.entity(enemy_entity).despawn();
             }

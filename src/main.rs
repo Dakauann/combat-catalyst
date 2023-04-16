@@ -27,12 +27,10 @@ fn main() {
             ..default()
         }))
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
-        .add_startup_systems((
-            player_systems::spawn_player,
-            camera_systems::spawn_camera,
-        ))
+        .add_startup_systems((player_systems::spawn_player, camera_systems::spawn_camera))
         .add_systems((
             player_systems::player_movement,
+            player_systems::animate_player_sprite,
             enemy_systems::spawn_enemys,
             enemy_systems::enemy_movement,
             enemy_systems::tick_enemy_spawn_timer,

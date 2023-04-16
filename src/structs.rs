@@ -37,6 +37,14 @@ impl Default for BulletShootingTimer {
 #[derive(Component)]
 pub struct Player {
     pub speed: f32,
+    pub current_state: PlayerState,
+    pub set_state: PlayerState,
+}
+
+#[derive(PartialEq)]
+pub enum PlayerState {
+    Idle,
+    Running,
 }
 
 #[derive(Component)]
@@ -44,3 +52,13 @@ pub struct Bullet {
     pub speed: f32,
     pub direction: Vec2,
 }
+
+// animation structs
+#[derive(Component)]
+pub struct AnimationIndices {
+    pub first: usize,
+    pub last: usize,
+}
+
+#[derive(Component, Deref, DerefMut)]
+pub struct AnimationTimer(pub Timer);

@@ -19,7 +19,7 @@ pub fn spawn_enemys(
         commands.spawn((
             SpriteBundle {
                 sprite: Sprite {
-                    color: Color::BLUE,
+                    color: Color::BISQUE,
                     flip_x: false,
                     flip_y: false,
                     custom_size: Some(ENEMY_SIZE),
