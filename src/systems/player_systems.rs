@@ -1,7 +1,6 @@
-#[path = "../lib/player_structs.rs"]
-mod player_structs;
+use crate::Enemy;
 use bevy::{prelude::*, sprite::Anchor, window::PrimaryWindow};
-use player_structs::Player;
+use crate::Player;
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -21,11 +20,13 @@ pub fn spawn_player(
                     anchor: Anchor::Center,
                     ..Default::default()
                 },
-                transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
+                transform: Transform::from_xyz(0.0, 0.0, 0.0),
                 ..Default::default()
             },
             Player { speed: 3.0 },
         ));
+
+        println!("Player spawned");
     }
 }
 

@@ -2,16 +2,19 @@ use bevy::{
     prelude::*,
     window::{PresentMode, WindowResolution},
 };
-mod lib;
+mod structs;
 mod systems;
 
-use lib::enemy_structs;
+use structs::*;
+use systems::bullet_systems;
 use systems::camera_systems;
 use systems::enemy_systems;
 use systems::player_systems;
 
 fn main() {
     App::new()
+        .init_resource::<EnemySpawnTimer>()
+        .init_resource::<BulletShootingTimer>()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Combat Catalyst".into(),
@@ -24,15 +27,20 @@ fn main() {
             ..default()
         }))
         .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
-        .insert_resource(enemy_structs::EnemysInfos { enemys_count: 30 })
         .add_startup_systems((
             player_systems::spawn_player,
             camera_systems::spawn_camera,
-            enemy_systems::spawn_enemys,
         ))
         .add_systems((
             player_systems::player_movement,
+            enemy_systems::spawn_enemys,
+            enemy_systems::enemy_movement,
+            enemy_systems::tick_enemy_spawn_timer,
             camera_systems::camera_movement,
+            bullet_systems::spawn_bullet,
+            bullet_systems::bullet_movement,
+            bullet_systems::bullet_hit_detection,
+            bullet_systems::tick_bullet_shooting_timer,
         ))
         .run();
 }

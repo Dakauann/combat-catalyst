@@ -1156,6 +1156,7 @@ dependencies = [
  "bevy",
  "bevy_rapier2d",
  "rand",
+ "rapier2d",
 ]
 
 [[package]]
